@@ -25,3 +25,7 @@ Thumbs.db
 
 # Data files
 data/raw/
+# Generated files - don't track these
+data/*.html
+data/*.json
+src/*.task
