@@ -1,0 +1,507 @@
+{
+  "date": "2026-06-10 09:15:21",
+  "duration_secs": 71,
+  "avg_eye_contact": 0.73,
+  "avg_posture": 0.76,
+  "avg_expression": 0.46,
+  "avg_score": 64.7,
+  "frames": [
+    {
+      "second": 1,
+      "eye_contact": 0.96,
+      "posture": 0.79,
+      "expression": 0.48,
+      "interview_score": 74.1
+    },
+    {
+      "second": 2,
+      "eye_contact": 0.97,
+      "posture": 0.75,
+      "expression": 0.48,
+      "interview_score": 73.2
+    },
+    {
+      "second": 3,
+      "eye_contact": 0.8,
+      "posture": 0.73,
+      "expression": 0.46,
+      "interview_score": 66.0
+    },
+    {
+      "second": 4,
+      "eye_contact": 0.91,
+      "posture": 0.7,
+      "expression": 0.48,
+      "interview_score": 69.6
+    },
+    {
+      "second": 5,
+      "eye_contact": 0.83,
+      "posture": 0.79,
+      "expression": 0.47,
+      "interview_score": 69.2
+    },
+    {
+      "second": 6,
+      "eye_contact": 0.23,
+      "posture": 0.82,
+      "expression": 0.49,
+      "interview_score": 49.8
+    },
+    {
+      "second": 7,
+      "eye_contact": 0.73,
+      "posture": 0.89,
+      "expression": 0.5,
+      "interview_score": 69.8
+    },
+    {
+      "second": 8,
+      "eye_contact": 0.94,
+      "posture": 0.94,
+      "expression": 0.5,
+      "interview_score": 78.6
+    },
+    {
+      "second": 9,
+      "eye_contact": 0.95,
+      "posture": 0.85,
+      "expression": 0.5,
+      "interview_score": 76.2
+    },
+    {
+      "second": 10,
+      "eye_contact": 0.99,
+      "posture": 0.96,
+      "expression": 0.5,
+      "interview_score": 80.9
+    },
+    {
+      "second": 11,
+      "eye_contact": 0.93,
+      "posture": 0.85,
+      "expression": 0.53,
+      "interview_score": 76.6
+    },
+    {
+      "second": 12,
+      "eye_contact": 0.98,
+      "posture": 0.81,
+      "expression": 0.52,
+      "interview_score": 76.8
+    },
+    {
+      "second": 13,
+      "eye_contact": 0.87,
+      "posture": 0.83,
+      "expression": 0.43,
+      "interview_score": 70.4
+    },
+    {
+      "second": 14,
+      "eye_contact": 0.97,
+      "posture": 0.69,
+      "expression": 0.39,
+      "interview_score": 68.3
+    },
+    {
+      "second": 15,
+      "eye_contact": 0.85,
+      "posture": 0.71,
+      "expression": 0.34,
+      "interview_score": 62.9
+    },
+    {
+      "second": 16,
+      "eye_contact": 0.97,
+      "posture": 0.74,
+      "expression": 0.47,
+      "interview_score": 72.6
+    },
+    {
+      "second": 17,
+      "eye_contact": 0.81,
+      "posture": 0.76,
+      "expression": 0.49,
+      "interview_score": 68.3
+    },
+    {
+      "second": 18,
+      "eye_contact": 0.56,
+      "posture": 0.93,
+      "expression": 0.48,
+      "interview_score": 64.3
+    },
+    {
+      "second": 19,
+      "eye_contact": 0.79,
+      "posture": 0.87,
+      "expression": 0.46,
+      "interview_score": 69.8
+    },
+    {
+      "second": 20,
+      "eye_contact": 0.95,
+      "posture": 0.9,
+      "expression": 0.5,
+      "interview_score": 77.8
+    },
+    {
+      "second": 21,
+      "eye_contact": 0.9,
+      "posture": 0.92,
+      "expression": 0.49,
+      "interview_score": 76.2
+    },
+    {
+      "second": 22,
+      "eye_contact": 0.84,
+      "posture": 0.87,
+      "expression": 0.49,
+      "interview_score": 72.6
+    },
+    {
+      "second": 23,
+      "eye_contact": 0.49,
+      "posture": 0.83,
+      "expression": 0.5,
+      "interview_score": 59.5
+    },
+    {
+      "second": 24,
+      "eye_contact": 0.44,
+      "posture": 0.83,
+      "expression": 0.48,
+      "interview_score": 57.1
+    },
+    {
+      "second": 25,
+      "eye_contact": 0.3,
+      "posture": 0.85,
+      "expression": 0.46,
+      "interview_score": 52.1
+    },
+    {
+      "second": 26,
+      "eye_contact": 0.17,
+      "posture": 0.82,
+      "expression": 0.45,
+      "interview_score": 46.3
+    },
+    {
+      "second": 27,
+      "eye_contact": 0.6,
+      "posture": 0.8,
+      "expression": 0.47,
+      "interview_score": 61.4
+    },
+    {
+      "second": 28,
+      "eye_contact": 0.83,
+      "posture": 0.76,
+      "expression": 0.38,
+      "interview_score": 65.1
+    },
+    {
+      "second": 29,
+      "eye_contact": 0.77,
+      "posture": 0.72,
+      "expression": 0.38,
+      "interview_score": 61.8
+    },
+    {
+      "second": 30,
+      "eye_contact": 0.72,
+      "posture": 0.78,
+      "expression": 0.52,
+      "interview_score": 66.8
+    },
+    {
+      "second": 31,
+      "eye_contact": 0.42,
+      "posture": 0.89,
+      "expression": 0.49,
+      "interview_score": 58.6
+    },
+    {
+      "second": 32,
+      "eye_contact": 0.41,
+      "posture": 0.81,
+      "expression": 0.48,
+      "interview_score": 55.5
+    },
+    {
+      "second": 33,
+      "eye_contact": 0.57,
+      "posture": 0.88,
+      "expression": 0.45,
+      "interview_score": 62.1
+    },
+    {
+      "second": 34,
+      "eye_contact": 0.76,
+      "posture": 0.93,
+      "expression": 0.44,
+      "interview_score": 69.9
+    },
+    {
+      "second": 35,
+      "eye_contact": 0.57,
+      "posture": 0.9,
+      "expression": 0.44,
+      "interview_score": 62.4
+    },
+    {
+      "second": 36,
+      "eye_contact": 0.6,
+      "posture": 0.92,
+      "expression": 0.45,
+      "interview_score": 64.3
+    },
+    {
+      "second": 37,
+      "eye_contact": 0.77,
+      "posture": 0.8,
+      "expression": 0.44,
+      "interview_score": 66.3
+    },
+    {
+      "second": 38,
+      "eye_contact": 0.62,
+      "posture": 0.82,
+      "expression": 0.43,
+      "interview_score": 61.3
+    },
+    {
+      "second": 39,
+      "eye_contact": 0.45,
+      "posture": 0.75,
+      "expression": 0.42,
+      "interview_score": 52.9
+    },
+    {
+      "second": 40,
+      "eye_contact": 0.48,
+      "posture": 0.77,
+      "expression": 0.41,
+      "interview_score": 54.2
+    },
+    {
+      "second": 41,
+      "eye_contact": 0.97,
+      "posture": 0.69,
+      "expression": 0.48,
+      "interview_score": 71.4
+    },
+    {
+      "second": 42,
+      "eye_contact": 0.97,
+      "posture": 0.76,
+      "expression": 0.48,
+      "interview_score": 73.5
+    },
+    {
+      "second": 43,
+      "eye_contact": 0.93,
+      "posture": 0.72,
+      "expression": 0.49,
+      "interview_score": 71.3
+    },
+    {
+      "second": 44,
+      "eye_contact": 0.97,
+      "posture": 0.75,
+      "expression": 0.47,
+      "interview_score": 72.9
+    },
+    {
+      "second": 45,
+      "eye_contact": 0.95,
+      "posture": 0.77,
+      "expression": 0.46,
+      "interview_score": 72.4
+    },
+    {
+      "second": 46,
+      "eye_contact": 0.9,
+      "posture": 0.76,
+      "expression": 0.51,
+      "interview_score": 72.1
+    },
+    {
+      "second": 47,
+      "eye_contact": 0.97,
+      "posture": 0.69,
+      "expression": 0.48,
+      "interview_score": 71.4
+    },
+    {
+      "second": 48,
+      "eye_contact": 0.93,
+      "posture": 0.7,
+      "expression": 0.48,
+      "interview_score": 70.3
+    },
+    {
+      "second": 49,
+      "eye_contact": 0.56,
+      "posture": 0.72,
+      "expression": 0.46,
+      "interview_score": 57.3
+    },
+    {
+      "second": 50,
+      "eye_contact": 0.25,
+      "posture": 0.7,
+      "expression": 0.47,
+      "interview_score": 46.2
+    },
+    {
+      "second": 51,
+      "eye_contact": 0.28,
+      "posture": 0.75,
+      "expression": 0.46,
+      "interview_score": 48.4
+    },
+    {
+      "second": 52,
+      "eye_contact": 0.87,
+      "posture": 0.81,
+      "expression": 0.45,
+      "interview_score": 70.5
+    },
+    {
+      "second": 53,
+      "eye_contact": 0.64,
+      "posture": 0.85,
+      "expression": 0.45,
+      "interview_score": 63.6
+    },
+    {
+      "second": 54,
+      "eye_contact": 0.5,
+      "posture": 0.77,
+      "expression": 0.45,
+      "interview_score": 56.4
+    },
+    {
+      "second": 55,
+      "eye_contact": 0.95,
+      "posture": 0.7,
+      "expression": 0.49,
+      "interview_score": 71.4
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.78,
+      "posture": 0.6,
+      "expression": 0.47,
+      "interview_score": 61.7
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.78,
+      "posture": 0.6,
+      "expression": 0.47,
+      "interview_score": 61.7
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.73,
+      "posture": 0.63,
+      "expression": 0.44,
+      "interview_score": 59.9
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.66,
+      "posture": 0.63,
+      "expression": 0.43,
+      "interview_score": 57.0
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.66,
+      "posture": 0.63,
+      "expression": 0.43,
+      "interview_score": 57.0
+    },
+    {
+      "second": 61,
+      "eye_contact": 0.62,
+      "posture": 0.62,
+      "expression": 0.41,
+      "interview_score": 54.6
+    },
+    {
+      "second": 62,
+      "eye_contact": 0.55,
+      "posture": 0.58,
+      "expression": 0.38,
+      "interview_score": 49.9
+    },
+    {
+      "second": 63,
+      "eye_contact": 0.73,
+      "posture": 0.65,
+      "expression": 0.5,
+      "interview_score": 62.5
+    },
+    {
+      "second": 64,
+      "eye_contact": 0.62,
+      "posture": 0.59,
+      "expression": 0.54,
+      "interview_score": 58.3
+    },
+    {
+      "second": 65,
+      "eye_contact": 0.69,
+      "posture": 0.59,
+      "expression": 0.4,
+      "interview_score": 55.9
+    },
+    {
+      "second": 66,
+      "eye_contact": 0.52,
+      "posture": 0.68,
+      "expression": 0.48,
+      "interview_score": 55.4
+    },
+    {
+      "second": 67,
+      "eye_contact": 0.55,
+      "posture": 0.71,
+      "expression": 0.47,
+      "interview_score": 57.0
+    },
+    {
+      "second": 68,
+      "eye_contact": 0.98,
+      "posture": 0.59,
+      "expression": 0.48,
+      "interview_score": 68.8
+    },
+    {
+      "second": 69,
+      "eye_contact": 0.78,
+      "posture": 0.72,
+      "expression": 0.47,
+      "interview_score": 65.3
+    },
+    {
+      "second": 70,
+      "eye_contact": 0.89,
+      "posture": 0.66,
+      "expression": 0.49,
+      "interview_score": 68.1
+    },
+    {
+      "second": 71,
+      "eye_contact": 0.94,
+      "posture": 0.65,
+      "expression": 0.5,
+      "interview_score": 69.9
+    }
+  ]
+}
