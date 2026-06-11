@@ -1,17 +1,63 @@
-from fastapi import FastAPI, HTTPException
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from datetime import timedelta, datetime
+from fastapi import Depends, status, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import sys
 import os
 import json
 import glob
-from datetime import datetime
 import numpy as np
 
-# Add src to path so we can import our modules
+# Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 from answer_scorer import analyze_answer
+
+# ── Auth config ────────────────────────────────────────────
+SECRET_KEY  = "prepsense-secret-key-2026"
+ALGORITHM   = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# ── User database ──────────────────────────────────────────
+# Passwords are pre-hashed. Both use password: "secret"
+USERS_DB = {
+    "palash": {
+        "username": "palash",
+        "role":     "candidate",
+        "hashed_password": "$2b$12$uiCxxaGba/gsPCKnllivDOIGEMXyCGWyzWf66dz6nh5vhRKb/Ue.m"
+    },
+    "interviewer": {
+        "username": "interviewer",
+        "role":     "interviewer",
+        "hashed_password": "$2b$12$uiCxxaGba/gsPCKnllivDOIGEMXyCGWyzWf66dz6nh5vhRKb/Ue.m"
+    }
+}
+
+# ── Auth functions ─────────────────────────────────────────
+def verify_password(plain, hashed):
+    return pwd_context.verify(plain, hashed)
+
+def create_token(data: dict):
+    to_encode = data.copy()
+    expire    = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload  = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        role     = payload.get("role")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {"username": username, "role": role}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 # ── FastAPI app ────────────────────────────────────────────
 app = FastAPI(
@@ -20,7 +66,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# ── CORS — allows frontend to talk to backend ──────────────
+# ── CORS ───────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,9 +76,9 @@ app.add_middleware(
 
 # ── Session storage ────────────────────────────────────────
 current_session = {
-    "active":    False,
+    "active":     False,
     "start_time": None,
-    "scores":    []
+    "scores":     []
 }
 
 # ── Request models ─────────────────────────────────────────
@@ -47,7 +93,41 @@ class ScoreUpdate(BaseModel):
     interview_score:  float
 
 # ══════════════════════════════════════════════════════════
-#  ENDPOINTS
+#  AUTH ENDPOINTS
+# ══════════════════════════════════════════════════════════
+
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Login and get access token"""
+    user = USERS_DB.get(form_data.username)
+
+    if not user or not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(
+            status_code=401,
+            detail="Wrong username or password"
+        )
+
+    token = create_token({
+        "sub":  user["username"],
+        "role": user["role"]
+    })
+
+    return {
+        "access_token": token,
+        "token_type":   "bearer",
+        "role":         user["role"],
+        "username":     user["username"]
+    }
+
+
+@app.get("/me")
+def get_me(current_user: dict = Depends(get_current_user)):
+    """Get current logged in user"""
+    return current_user
+
+
+# ══════════════════════════════════════════════════════════
+#  MAIN ENDPOINTS
 # ══════════════════════════════════════════════════════════
 
 @app.get("/health")
@@ -85,9 +165,8 @@ def end_session():
         raise HTTPException(status_code=400, detail="No active session")
 
     current_session["active"] = False
-
-    # Calculate averages
     scores = current_session["scores"]
+
     if scores:
         summary = {
             "date":            current_session["start_time"],
@@ -99,17 +178,12 @@ def end_session():
             "frames":          scores
         }
 
-        # Save to data folder
         os.makedirs("../data", exist_ok=True)
         filename = f"../data/session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(filename, "w") as f:
             json.dump(summary, f, indent=2)
 
-        return {
-            "status":    "saved",
-            "summary":   summary,
-            "file":      filename
-        }
+        return {"status": "saved", "summary": summary, "file": filename}
 
     return {"status": "ended", "message": "No scores recorded"}
 
@@ -128,7 +202,6 @@ def update_scores(scores: ScoreUpdate):
         "interview_score": scores.interview_score
     }
     current_session["scores"].append(frame_data)
-
     return {"status": "updated", "frame": frame_data}
 
 
@@ -142,9 +215,7 @@ def get_live_scores():
             "expression":      0.0,
             "interview_score": 0.0
         }
-
-    latest = current_session["scores"][-1]
-    return latest
+    return current_session["scores"][-1]
 
 
 @app.post("/score-answer")
@@ -176,9 +247,9 @@ def get_session_history():
         with open(file, "r") as f:
             session = json.load(f)
         sessions.append({
-            "date":      session.get("date"),
-            "score":     session.get("avg_score"),
-            "duration":  session.get("duration_secs")
+            "date":     session.get("date"),
+            "score":    session.get("avg_score"),
+            "duration": session.get("duration_secs")
         })
 
     return {
@@ -202,9 +273,9 @@ def get_session_report():
         all_scores.append(session.get("avg_score", 0))
 
     return {
-        "total_sessions":  len(session_files),
-        "average_score":   round(np.mean(all_scores), 1),
-        "best_score":      round(max(all_scores), 1),
-        "latest_score":    round(all_scores[-1], 1),
-        "improvement":     round(all_scores[-1] - all_scores[0], 1) if len(all_scores) > 1 else 0
+        "total_sessions": len(session_files),
+        "average_score":  round(np.mean(all_scores), 1),
+        "best_score":     round(max(all_scores), 1),
+        "latest_score":   round(all_scores[-1], 1),
+        "improvement":    round(all_scores[-1] - all_scores[0], 1) if len(all_scores) > 1 else 0
     }
