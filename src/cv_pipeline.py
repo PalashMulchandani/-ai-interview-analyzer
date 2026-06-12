@@ -407,6 +407,21 @@ with FaceLandmarker.create_from_options(face_options) as face_lm, \
                 "expression":      expr_score,
                 "interview_score": interview_score
             })
+            # Send scores to API in real time
+        try:
+            import requests
+            requests.post(
+                "http://127.0.0.1:8000/update-scores",
+                json={
+                    "eye_contact":     eye_score,
+                    "posture":         pose_score,
+                    "expression":      expr_score,
+                    "interview_score": interview_score
+                },
+                timeout=0.1
+            )
+        except:
+            pass  # API not running — continue anyway
 
         # Draw dashboard
         frame = draw_dashboard(

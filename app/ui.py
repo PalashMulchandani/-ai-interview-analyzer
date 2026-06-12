@@ -1,11 +1,8 @@
 import streamlit as st
 import requests
-import cv2
-import numpy as np
 import time
 import sys
 import os
-from PIL import Image
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -21,9 +18,7 @@ st.set_page_config(
 # ── Custom CSS ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    .main { background-color: #0D1117; }
     .stApp { background-color: #0D1117; }
-    
     .hero-title {
         font-size: 3rem;
         font-weight: 700;
@@ -39,48 +34,32 @@ st.markdown("""
         text-align: center;
         margin-bottom: 2rem;
     }
-    .mode-card {
-        background: #161B22;
-        border: 1px solid #30363D;
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    .mode-card:hover {
-        border-color: #00FF9C;
-    }
-    .score-card {
-        background: #161B22;
-        border: 1px solid #30363D;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-    }
-    .big-score {
-        font-size: 3rem;
-        font-weight: 700;
-        color: #00FF9C;
-    }
-    .metric-label {
-        font-size: 0.8rem;
-        color: #8B949E;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 API_URL = "http://127.0.0.1:8000"
 
 # ── Session state ──────────────────────────────────────────
-if "mode"            not in st.session_state:
-    st.session_state.mode         = None
-if "session_active"  not in st.session_state:
+if "mode"           not in st.session_state:
+    st.session_state.mode           = None
+if "session_active" not in st.session_state:
     st.session_state.session_active = False
-if "scores"          not in st.session_state:
-    st.session_state.scores       = []
+if "live_scores"    not in st.session_state:
+    st.session_state.live_scores    = {}
+
+
+# ══════════════════════════════════════════════════════════
+#  HELPER
+# ══════════════════════════════════════════════════════════
+
+def fetch_live_scores():
+    try:
+        r = requests.get(f"{API_URL}/live-scores", timeout=1)
+        if r.status_code == 200:
+            return r.json()
+    except:
+        pass
+    return {}
 
 
 # ══════════════════════════════════════════════════════════
@@ -98,10 +77,10 @@ def show_landing():
 
     with col1:
         st.markdown("""
-        <div class="mode-card">
+        <div style="background:#161B22; border:1px solid #30363D; border-radius:12px; padding:2rem; text-align:center;">
             <h2>🎓</h2>
-            <h3 style="color: #00FF9C">Candidate Mode</h3>
-            <p style="color: #8B949E">Practice mock interviews, get AI feedback,
+            <h3 style="color:#00FF9C">Candidate Mode</h3>
+            <p style="color:#8B949E">Practice mock interviews, get AI feedback,
             track your improvement over time</p>
         </div>
         """, unsafe_allow_html=True)
@@ -112,10 +91,10 @@ def show_landing():
 
     with col2:
         st.markdown("""
-        <div class="mode-card">
+        <div style="background:#161B22; border:1px solid #30363D; border-radius:12px; padding:2rem; text-align:center;">
             <h2>🏢</h2>
-            <h3 style="color: #00B4D8">Interviewer Mode</h3>
-            <p style="color: #8B949E">Assess candidates objectively with
+            <h3 style="color:#00B4D8">Interviewer Mode</h3>
+            <p style="color:#8B949E">Assess candidates objectively with
             AI-powered behavioral analysis</p>
         </div>
         """, unsafe_allow_html=True)
@@ -124,17 +103,16 @@ def show_landing():
             st.session_state.mode = "interviewer"
             st.rerun()
 
-    # Stats
     st.markdown("---")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Domains", "4", "CV + ML + NLP + Analytics")
+        st.metric("Domains",    "4",     "CV + ML + NLP + Analytics")
     with col2:
-        st.metric("Real Time", "30 FPS", "Live analysis")
+        st.metric("Real Time",  "30 FPS","Live analysis")
     with col3:
-        st.metric("Accuracy", "85%+", "Confidence scoring")
+        st.metric("Accuracy",   "85%+",  "Confidence scoring")
     with col4:
-        st.metric("Mode", "Dual", "Candidate + Interviewer")
+        st.metric("Mode",       "Dual",  "Candidate + Interviewer")
 
 
 # ══════════════════════════════════════════════════════════
@@ -142,11 +120,9 @@ def show_landing():
 # ══════════════════════════════════════════════════════════
 
 def show_candidate_mode():
-    # Sidebar
     with st.sidebar:
         st.markdown("### 🎓 Candidate Mode")
         st.markdown("---")
-
         if st.button("🏠 Back to Home"):
             st.session_state.mode = None
             st.rerun()
@@ -165,10 +141,8 @@ def show_candidate_mode():
         selected_q = st.selectbox("Select Question", questions)
 
         st.markdown("---")
-        st.markdown("### 📊 Tips")
         st.info("Use STAR method:\n\n**S**ituation\n**T**ask\n**A**ction\n**R**esult")
 
-    # Main content
     st.markdown("## 🎓 Interview Practice Mode")
 
     tab1, tab2, tab3 = st.tabs(["📹 Live Analysis", "💬 Answer Scorer", "📈 My Progress"])
@@ -176,58 +150,67 @@ def show_candidate_mode():
     # ── Tab 1: Live Analysis ──
     with tab1:
         st.markdown("### Real-Time Behavior Analysis")
-        st.info("Start the CV pipeline separately: `python src/cv_pipeline.py`")
+        st.info("Make sure cv_pipeline.py and API server are running!")
+
+        # Auto refresh toggle
+        auto_refresh = st.toggle("🔄 Auto Refresh (every 2s)", value=False)
 
         col1, col2 = st.columns([1, 2])
 
         with col1:
             st.markdown("#### Live Scores")
+            scores = fetch_live_scores()
 
-            if st.button("🔄 Refresh Scores"):
-                try:
-                    r = requests.get(f"{API_URL}/live-scores", timeout=2)
-                    if r.status_code == 200:
-                        scores = r.json()
-                        st.session_state.scores = scores
-                except:
-                    st.warning("Start the API server first!")
+            if scores and scores.get("interview_score", 0) > 0:
+                eye  = int(scores.get("eye_contact",     0) * 100)
+                post = int(scores.get("posture",          0) * 100)
+                expr = int(scores.get("expression",       0) * 100)
+                ivsc = scores.get("interview_score", 0)
 
-            if st.session_state.scores:
-                scores = st.session_state.scores
-                st.metric("👁️ Eye Contact",
-                         f"{int(scores.get('eye_contact', 0) * 100)}%")
-                st.metric("🧍 Posture",
-                         f"{int(scores.get('posture', 0) * 100)}%")
-                st.metric("😊 Expression",
-                         f"{int(scores.get('expression', 0) * 100)}%")
-                st.metric("🎯 Interview Score",
-                         f"{scores.get('interview_score', 0)}/100")
+                st.metric("👁️ Eye Contact",      f"{eye}%")
+                st.metric("🧍 Posture",           f"{post}%")
+                st.metric("😊 Expression",        f"{expr}%")
+                st.metric("🎯 Interview Score",   f"{ivsc}/100")
+
+                # Color indicator
+                if ivsc >= 70:
+                    st.success(f"Score: {ivsc}/100 — Good!")
+                elif ivsc >= 50:
+                    st.warning(f"Score: {ivsc}/100 — Average")
+                else:
+                    st.error(f"Score: {ivsc}/100 — Needs Work")
             else:
-                st.metric("👁️ Eye Contact",  "–")
-                st.metric("🧍 Posture",      "–")
-                st.metric("😊 Expression",   "–")
+                st.metric("👁️ Eye Contact",    "–")
+                st.metric("🧍 Posture",         "–")
+                st.metric("😊 Expression",      "–")
                 st.metric("🎯 Interview Score", "–")
+                st.warning("Start cv_pipeline.py to see live scores")
 
         with col2:
-            st.markdown("#### How to use")
+            st.markdown("#### How To Use")
             st.markdown("""
-            1. Open a **new terminal**
-            2. Activate venv: `venv\\Scripts\\activate`
-            3. Run: `cd src && python cv_pipeline.py`
-            4. Come back here and click **Refresh Scores**
-            5. Your live scores will appear!
+            1. Open **Terminal 1:** `uvicorn api.main:app --reload`
+            2. Open **Terminal 2:** `streamlit run app/ui.py`
+            3. Open **Terminal 3:** `cd src && python cv_pipeline.py`
+            4. Go to `/docs` → POST `/start-session` → Execute
+            5. Come back here — scores update automatically!
             """)
 
             st.markdown("#### Improvement Tips")
             tips = {
-                "👁️ Eye Contact":  "Look directly at camera, not at your own face on screen",
+                "👁️ Eye Contact":  "Look directly at camera, not at your face on screen",
                 "🧍 Posture":      "Sit straight, keep shoulders level and relaxed",
-                "😊 Expression":   "Smile naturally, relax eyebrows, stay calm",
-                "🎙️ Speech":       "Speak at 120-150 words per minute, avoid filler words"
+                "😊 Expression":   "Smile naturally, relax your eyebrows",
+                "🎙️ Speech":       "Speak at 120-150 WPM, avoid filler words"
             }
             for tip, desc in tips.items():
                 with st.expander(tip):
                     st.write(desc)
+
+        # Auto refresh logic
+        if auto_refresh:
+            time.sleep(2)
+            st.rerun()
 
     # ── Tab 2: Answer Scorer ──
     with tab2:
@@ -236,7 +219,7 @@ def show_candidate_mode():
 
         answer = st.text_area(
             "Your Answer",
-            placeholder="Type your answer here using the STAR method...",
+            placeholder="Type your answer using the STAR method...",
             height=150
         )
 
@@ -252,34 +235,27 @@ def show_candidate_mode():
                         if r.status_code == 200:
                             result = r.json()
 
-                            # Score display
                             col1, col2, col3, col4 = st.columns(4)
                             with col1:
-                                st.metric("Overall Score",
-                                         f"{result['overall_score']}/100")
+                                st.metric("Overall",    f"{result['overall_score']}/100")
                             with col2:
-                                st.metric("Confidence",
-                                         f"{result['confidence_score']}/100")
+                                st.metric("Confidence", f"{result['confidence_score']}/100")
                             with col3:
-                                st.metric("STAR Structure",
-                                         f"{result['star_score']}/100")
+                                st.metric("STAR",       f"{result['star_score']}/100")
                             with col4:
-                                st.metric("Clarity",
-                                         f"{result['clarity_score']}/100")
+                                st.metric("Clarity",    f"{result['clarity_score']}/100")
 
-                            # Feedback
                             st.markdown("#### 💡 Feedback")
                             for f in result['feedback']:
                                 st.write(f)
 
-                            # Score interpretation
                             score = result['overall_score']
                             if score >= 80:
-                                st.success("Excellent answer! You're ready for real interviews.")
+                                st.success("Excellent! You're ready for real interviews.")
                             elif score >= 60:
-                                st.warning("Good answer. Work on the areas flagged above.")
+                                st.warning("Good. Work on the areas flagged above.")
                             else:
-                                st.error("Needs improvement. Practice using STAR method.")
+                                st.error("Needs improvement. Practice STAR method.")
                         else:
                             st.error("API error. Make sure server is running.")
                     except:
@@ -290,25 +266,25 @@ def show_candidate_mode():
     # ── Tab 3: Progress ──
     with tab3:
         st.markdown("### 📈 Your Progress")
-
-        try:
-            r = requests.get(f"{API_URL}/session-report", timeout=2)
-            if r.status_code == 200:
-                report = r.json()
-                if "total_sessions" in report:
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Total Sessions", report['total_sessions'])
-                    with col2:
-                        st.metric("Average Score",  f"{report['average_score']}/100")
-                    with col3:
-                        st.metric("Best Score",     f"{report['best_score']}/100")
-                    with col4:
-                        st.metric("Improvement",    f"+{report['improvement']}")
-                else:
-                    st.info("No sessions yet. Run cv_pipeline.py to record a session!")
-        except:
-            st.warning("Start API server to see your progress!")
+        if st.button("🔄 Load Progress"):
+            try:
+                r = requests.get(f"{API_URL}/session-report", timeout=2)
+                if r.status_code == 200:
+                    report = r.json()
+                    if "total_sessions" in report:
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Sessions",    report['total_sessions'])
+                        with col2:
+                            st.metric("Avg Score",   f"{report['average_score']}/100")
+                        with col3:
+                            st.metric("Best Score",  f"{report['best_score']}/100")
+                        with col4:
+                            st.metric("Improvement", f"+{report['improvement']}")
+                    else:
+                        st.info("No sessions yet. Run cv_pipeline.py first!")
+            except:
+                st.warning("Start API server to see progress!")
 
 
 # ══════════════════════════════════════════════════════════
@@ -319,15 +295,14 @@ def show_interviewer_mode():
     with st.sidebar:
         st.markdown("### 🏢 Interviewer Mode")
         st.markdown("---")
-
         if st.button("🏠 Back to Home"):
             st.session_state.mode = None
             st.rerun()
 
         st.markdown("### 👤 Candidate Info")
-        candidate_name = st.text_input("Candidate Name", "John Doe")
-        position       = st.text_input("Position", "Software Engineer")
-        company        = st.text_input("Company", "Tech Corp")
+        candidate_name = st.text_input("Candidate Name",  "John Doe")
+        position       = st.text_input("Position",        "Software Engineer")
+        company        = st.text_input("Company",         "Tech Corp")
 
         st.markdown("---")
         st.markdown("### ⚙️ Session Control")
@@ -350,14 +325,13 @@ def show_interviewer_mode():
             except:
                 st.error("No active session")
 
-    # Main content
     st.markdown("## 🏢 Candidate Assessment Mode")
     st.markdown(f"**Candidate:** {candidate_name} | **Position:** {position}")
 
     if st.session_state.session_active:
         st.success("🔴 Assessment in progress...")
     else:
-        st.info("Click 'Start Assessment' to begin")
+        st.info("Click 'Start Assessment' in sidebar to begin")
 
     tab1, tab2, tab3 = st.tabs(["📊 Live Assessment", "📋 Question Panel", "📄 Report"])
 
@@ -365,55 +339,51 @@ def show_interviewer_mode():
     with tab1:
         st.markdown("### Real-Time Candidate Analysis")
 
+        auto_refresh = st.toggle("🔄 Auto Refresh", value=False)
+
+        scores = fetch_live_scores()
+
         col1, col2, col3 = st.columns(3)
 
-        if st.button("🔄 Refresh Live Data"):
-            try:
-                r = requests.get(f"{API_URL}/live-scores", timeout=2)
-                if r.status_code == 200:
-                    st.session_state.scores = r.json()
-            except:
-                pass
-
-        scores = st.session_state.scores if st.session_state.scores else {}
-
         with col1:
-            eye = int(scores.get('eye_contact', 0) * 100)
+            eye = int(scores.get("eye_contact", 0) * 100)
             st.markdown("#### 👁️ Eye Contact")
             st.progress(eye / 100)
             color = "🟢" if eye > 60 else "🔴"
             st.markdown(f"### {color} {eye}%")
 
         with col2:
-            posture = int(scores.get('posture', 0) * 100)
+            posture = int(scores.get("posture", 0) * 100)
             st.markdown("#### 🧍 Posture")
             st.progress(posture / 100)
             color = "🟢" if posture > 60 else "🔴"
             st.markdown(f"### {color} {posture}%")
 
         with col3:
-            expression = int(scores.get('expression', 0) * 100)
+            expression = int(scores.get("expression", 0) * 100)
             st.markdown("#### 😊 Confidence")
             st.progress(expression / 100)
             color = "🟢" if expression > 50 else "🔴"
             st.markdown(f"### {color} {expression}%")
 
-        # Overall
-        overall = scores.get('interview_score', 0)
+        overall = scores.get("interview_score", 0)
         st.markdown("---")
         st.markdown(f"## 🎯 Overall Score: **{overall}/100**")
 
         if overall >= 75:
             st.success("Strong candidate — confident and engaged")
         elif overall >= 50:
-            st.warning("Average performance — some areas need improvement")
+            st.warning("Average — some areas need improvement")
         else:
-            st.error("Weak performance — candidate appears nervous or disengaged")
+            st.error("Weak — candidate appears nervous or disengaged")
+
+        if auto_refresh:
+            time.sleep(2)
+            st.rerun()
 
     # ── Tab 2: Question Panel ──
     with tab2:
         st.markdown("### Interview Questions")
-
         categories = {
             "HR Round": [
                 "Tell me about yourself",
@@ -434,49 +404,38 @@ def show_interviewer_mode():
                 "How do you handle pressure?"
             ]
         }
-
-        category = st.selectbox("Question Category", list(categories.keys()))
-        question = st.selectbox("Select Question", categories[category])
-
+        category = st.selectbox("Category", list(categories.keys()))
+        question = st.selectbox("Question", categories[category])
         st.markdown(f"**Current Question:** {question}")
-        st.text_area("Notes", placeholder="Type your notes about candidate's answer...", height=100)
+        st.text_area("Notes", placeholder="Notes about candidate's answer...", height=100)
 
     # ── Tab 3: Report ──
     with tab3:
         st.markdown("### Candidate Report")
-
         if st.button("📄 Generate Report"):
             try:
                 r = requests.get(f"{API_URL}/session-report", timeout=2)
                 if r.status_code == 200:
                     report = r.json()
-
-                    st.markdown(f"""
-                    ## PrepSense Assessment Report
-                    **Candidate:** {candidate_name}
-                    **Position:** {position}
-                    **Company:** {company}
-                    ---
-                    """)
-
+                    st.markdown(f"## Assessment Report")
+                    st.markdown(f"**Candidate:** {candidate_name} | **Position:** {position} | **Company:** {company}")
+                    st.markdown("---")
                     if "average_score" in report:
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.metric("Overall Score",  f"{report['average_score']}/100")
-                            st.metric("Best Score",     f"{report['best_score']}/100")
+                            st.metric("Overall Score", f"{report['average_score']}/100")
+                            st.metric("Best Score",    f"{report['best_score']}/100")
                         with col2:
-                            st.metric("Sessions",       report['total_sessions'])
-                            st.metric("Latest Score",   f"{report['latest_score']}/100")
+                            st.metric("Sessions",      report['total_sessions'])
+                            st.metric("Latest Score",  f"{report['latest_score']}/100")
 
                         score = report['average_score']
                         if score >= 75:
-                            recommendation = "✅ RECOMMENDED — Strong candidate"
+                            st.success("✅ RECOMMENDED — Strong candidate")
                         elif score >= 55:
-                            recommendation = "⚠️ CONSIDER — Average candidate"
+                            st.warning("⚠️ CONSIDER — Average candidate")
                         else:
-                            recommendation = "❌ NOT RECOMMENDED — Weak performance"
-
-                        st.markdown(f"### Recommendation: {recommendation}")
+                            st.error("❌ NOT RECOMMENDED — Weak performance")
                     else:
                         st.info("Run an assessment session first!")
             except:
