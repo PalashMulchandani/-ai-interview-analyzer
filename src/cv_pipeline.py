@@ -196,6 +196,7 @@ def run_calibration(cap, face_landmarker):
                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
         cv2.putText(frame, f"{remaining}s remaining...", (30, 100),
                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+        cv2.resizeWindow('PrepSense — AI Interview Analyzer', 760, 580)
         cv2.imshow('PrepSense — AI Interview Analyzer', frame)
         cv2.waitKey(1)
 
@@ -356,6 +357,7 @@ pose_options = PoseLandmarkerOptions(
 )
 
 cap        = cv2.VideoCapture(0)
+cv2.namedWindow('PrepSense — AI Interview Analyzer', cv2.WINDOW_NORMAL)
 start_time = None
 
 with FaceLandmarker.create_from_options(face_options) as face_lm, \
@@ -422,6 +424,76 @@ with FaceLandmarker.create_from_options(face_options) as face_lm, \
             )
         except:
             pass  # API not running — continue anyway
+        # ── JARVIS visuals ──
+        if face_result.face_landmarks:
+            lm = face_result.face_landmarks[0]
+
+            # Face mesh dots
+            # Only key landmark dots — lips, eyebrows, jaw outline
+            KEY_POINTS = [
+                # Jaw outline
+                10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
+                397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
+                172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109,
+                # Eyebrows
+                70, 63, 105, 66, 107, 336, 296, 334, 293, 300,
+                
+                
+               # Nose
+                1, 2, 98, 327,
+                # Cheekbones
+                116, 123, 147, 213, 192, 343, 352, 376, 433, 416
+            ]
+            for i in KEY_POINTS:
+                x = int(lm[i].x * w)
+                y = int(lm[i].y * h)
+                cv2.circle(frame, (x, y), 2, (0, 255, 150), -1)
+
+            # Iris circles
+            # Iris — single center dot only
+            left_iris_x  = int(sum(lm[i].x for i in LEFT_IRIS)  / len(LEFT_IRIS)  * w)
+            left_iris_y  = int(sum(lm[i].y for i in LEFT_IRIS)  / len(LEFT_IRIS)  * h)
+            right_iris_x = int(sum(lm[i].x for i in RIGHT_IRIS) / len(RIGHT_IRIS) * w)
+            right_iris_y = int(sum(lm[i].y for i in RIGHT_IRIS) / len(RIGHT_IRIS) * h)
+            cv2.circle(frame, (left_iris_x,  left_iris_y),  6, (0, 200, 255), 2)
+            cv2.circle(frame, (right_iris_x, right_iris_y), 6, (0, 200, 255), 2)
+
+            # Face bounding box — sci-fi corner brackets
+            # Use only forehead + chin + cheek points for tight box
+            BOX_POINTS = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
+                          397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
+                          172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
+            xs = [int(lm[i].x * w) for i in BOX_POINTS]
+            ys = [int(lm[i].y * h) for i in BOX_POINTS]
+            x1, y1 = max(0, min(xs) - 10), max(0, min(ys) - 90)
+            x2, y2 = min(w, max(xs) + 10), min(h, max(ys) + 20)
+            corner = 20
+            thickness = 2
+            color = (0, 100, 255)
+            # Top-left
+            cv2.line(frame, (x1, y1), (x1 + corner, y1), color, thickness)
+            cv2.line(frame, (x1, y1), (x1, y1 + corner), color, thickness)
+            # Top-right
+            cv2.line(frame, (x2, y1), (x2 - corner, y1), color, thickness)
+            cv2.line(frame, (x2, y1), (x2, y1 + corner), color, thickness)
+            # Bottom-left
+            cv2.line(frame, (x1, y2), (x1 + corner, y2), color, thickness)
+            cv2.line(frame, (x1, y2), (x1, y2 - corner), color, thickness)
+            # Bottom-right
+            cv2.line(frame, (x2, y2), (x2 - corner, y2), color, thickness)
+            cv2.line(frame, (x2, y2), (x2, y2 - corner), color, thickness)
+
+        # Shoulder alignment line
+        if pose_result.pose_landmarks:
+            plm = pose_result.pose_landmarks[0]
+            ls_x = int(plm[LEFT_SHOULDER].x  * w)
+            ls_y = int(plm[LEFT_SHOULDER].y  * h)
+            rs_x = int(plm[RIGHT_SHOULDER].x * w)
+            rs_y = int(plm[RIGHT_SHOULDER].y * h)
+            shoulder_color = (0, 255, 150) if pose_score > 0.6 else (0, 100, 255)
+            cv2.line(frame, (ls_x, ls_y), (rs_x, rs_y), shoulder_color, 2)
+            cv2.circle(frame, (ls_x, ls_y), 5, shoulder_color, -1)
+            cv2.circle(frame, (rs_x, rs_y), 5, shoulder_color, -1)
 
         # Draw dashboard
         frame = draw_dashboard(

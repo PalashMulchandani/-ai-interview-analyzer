@@ -5,6 +5,59 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime
+def build_dashboard_streamlit(sessions_df, frames_df):
+    latest_date   = sessions_df['date'].iloc[-1]
+    latest_frames = frames_df[frames_df['session_date'] == latest_date].copy()
+
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=(
+            "📈 Score Over Time",
+            "📊 Avg Scores by Category",
+            "👁️ Eye Contact Timeline",
+            "🏆 Session History"
+        ),
+        vertical_spacing=0.18,
+        horizontal_spacing=0.12
+    )
+
+    fig.add_trace(go.Scatter(
+        x=latest_frames['second'], y=latest_frames['interview_score'],
+        mode='lines+markers', line=dict(color='#00FF9C', width=2), marker=dict(size=4)
+    ), row=1, col=1)
+
+    fig.add_trace(go.Bar(
+        x=['Eye Contact', 'Posture', 'Expression'],
+        y=[sessions_df['avg_eye'].mean()*100, sessions_df['avg_posture'].mean()*100, sessions_df['avg_expression'].mean()*100],
+        marker_color=['#00B4D8', '#90E0EF', '#CAF0F8'],
+        text=[f"{v:.1f}%" for v in [sessions_df['avg_eye'].mean()*100, sessions_df['avg_posture'].mean()*100, sessions_df['avg_expression'].mean()*100]],
+        textposition='auto'
+    ), row=1, col=2)
+
+    fig.add_trace(go.Scatter(
+        x=latest_frames['second'], y=latest_frames['eye_contact'],
+        mode='lines', line=dict(color='#FFB703', width=2),
+        fill='tozeroy', fillcolor='rgba(255,183,3,0.15)'
+    ), row=2, col=1)
+
+    if len(sessions_df) > 1:
+        fig.add_trace(go.Scatter(
+            x=list(range(1, len(sessions_df)+1)), y=sessions_df['avg_score'],
+            mode='lines+markers', line=dict(color='#FB5607', width=2), marker=dict(size=8)
+        ), row=2, col=2)
+    else:
+        fig.add_trace(go.Bar(
+            x=latest_frames['second'], y=latest_frames['posture'], marker_color='#8338EC'
+        ), row=2, col=2)
+
+    fig.update_layout(
+        paper_bgcolor='#0D1117', plot_bgcolor='#161B22',
+        font=dict(color='white'), showlegend=False, height=680,
+        margin=dict(t=60, b=20, l=20, r=20)
+    )
+    fig.update_xaxes(gridcolor='#30363D')
+    fig.update_yaxes(gridcolor='#30363D')
+    return fig
 
 # ── Load all session files ─────────────────────────────────
 
@@ -238,4 +291,4 @@ if __name__ == "__main__":
 
     if sessions_df is not None:
         analyze_performance(sessions_df, frames_df)
-        build_dashboard(sessions_df, frames_df)
+        build_dashboard(sessions_df, frames_df) 
