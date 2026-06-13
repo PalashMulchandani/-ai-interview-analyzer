@@ -386,6 +386,7 @@ def show_candidate_mode():
         st.markdown("---")
         auto = st.toggle("🔄 Auto Refresh (every 2s)", value=False)
         if auto:
+            import time
             time.sleep(2)
             st.rerun()
 
@@ -399,6 +400,56 @@ def show_candidate_mode():
             <p class="question-text">"{current_q}"</p>
         </div>
         """, unsafe_allow_html=True)
+        # ── Speech Recording ──
+        st.markdown("#### 🎙️ Record Your Answer (or type below)")
+        col_rec1, col_rec2 = st.columns([1, 3])
+        with col_rec1:
+            record_btn = st.button("🎙️ Record 5 Seconds", use_container_width=True)
+        with col_rec2:
+            st.markdown("<div style='color:#8B949E; padding-top:0.5rem'>Click record, speak your answer, then analyze</div>", unsafe_allow_html=True)
+
+        if record_btn:
+            with st.spinner("🎙️ Recording... Speak now!"):
+                try:
+                    import sys
+                    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+                    from speech_detector import record_audio, transcribe_audio, analyze_speech, RECORD_SECONDS
+                    import time
+                    start = time.time()
+                    audio = record_audio(RECORD_SECONDS)
+                    duration = time.time() - start
+                    text = transcribe_audio(audio)
+                    if text:
+                        result = analyze_speech(text, duration)
+                        st.session_state.speech_result = result
+                        st.session_state.speech_answer = text
+                        st.success("✅ Recording done!")
+                    else:
+                        st.warning("No speech detected. Try again.")
+                except Exception as e:
+                    st.error(f"Speech error: {e}")
+
+        # Show speech results if available
+        if "speech_result" in st.session_state and st.session_state.speech_result:
+            sr = st.session_state.speech_result
+            st.markdown("##### 🎙️ Speech Analysis")
+            col_a, col_b, col_c = st.columns(3)
+            with col_a:
+                wpm_color = "#00FF9C" if sr['pace_label'] == "Good Pace" else "#FFB703" if sr['pace_label'] == "Too Slow" else "#FF3B3B"
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">SPEECH PACE</div><div style="font-size:2rem;font-weight:900;color:{wpm_color}">{sr["wpm"]} WPM</div><div style="color:{wpm_color}">{sr["pace_label"]}</div></div>', unsafe_allow_html=True)
+            with col_b:
+                fc_color = "#00FF9C" if sr['filler_count'] == 0 else "#FFB703" if sr['filler_count'] <= 2 else "#FF3B3B"
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">FILLER WORDS</div><div style="font-size:2rem;font-weight:900;color:{fc_color}">{sr["filler_count"]}</div><div style="color:{fc_color}">{"Clean!" if sr["filler_count"]==0 else "Detected"}</div></div>', unsafe_allow_html=True)
+            with col_c:
+                sc_color = get_score_color(sr['speech_score'])
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">SPEECH SCORE</div><div style="font-size:2rem;font-weight:900;color:{sc_color}">{sr["speech_score"]}/100</div></div>', unsafe_allow_html=True)
+
+            if sr['filler_words']:
+                st.markdown("**Filler words detected:** " + ", ".join([f"'{f['word']}' x{f['count']}" for f in sr['filler_words']]))
+
+            st.markdown("**Transcription:**")
+            st.info(sr['text'])
+            st.markdown("---")
 
         col1, col2 = st.columns([2, 1])
         with col1:
@@ -488,91 +539,48 @@ def show_candidate_mode():
     with tab3:
         st.markdown("### 📈 Your Interview Progress")
 
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            if st.button("🔄 Load My Progress", type="primary"):
-                try:
-                    r = requests.get(f"{API_URL}/session-report", timeout=2)
-                    if r.status_code == 200:
-                        st.session_state.progress = r.json()
-                except:
-                    st.error("Start API server first!")
+        if "sessions_df" not in st.session_state:
+            st.session_state.sessions_df = None
+            st.session_state.frames_df   = None
 
-        if "progress" in st.session_state and st.session_state.progress:
-            report = st.session_state.progress
-            if "average_score" in report:
-                col1, col2, col3, col4 = st.columns(4)
+        if st.button("🔄 Load My Progress", type="primary"):
+            try:
+                from analytics_dashboard import load_all_sessions, build_dashboard_streamlit
+                sessions_df, frames_df = load_all_sessions()
+                if sessions_df is not None:
+                    st.session_state.sessions_df = sessions_df
+                    st.session_state.frames_df   = frames_df
+                    st.success(f"✅ Loaded {len(sessions_df)} session(s)")
+                else:
+                    st.warning("No session files found — run cv_pipeline.py first!")
+            except Exception as e:
+                st.error(f"Error: {e}")
 
-                with col1:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div style="color:#8B949E; font-size:0.8rem">SESSIONS</div>
-                        <div style="font-size:3rem; font-weight:900; color:#00FF9C">
-                            {report['total_sessions']}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+        if st.session_state.sessions_df is not None:
+            sessions_df = st.session_state.sessions_df
+            frames_df   = st.session_state.frames_df
 
-                with col2:
-                    color = get_score_color(report['average_score'])
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div style="color:#8B949E; font-size:0.8rem">AVG SCORE</div>
-                        <div style="font-size:3rem; font-weight:900; color:{color}">
-                            {report['average_score']}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            col1, col2, col3, col4 = st.columns(4)
+            imp = (sessions_df['avg_score'].iloc[-1] - sessions_df['avg_score'].iloc[0]
+                   if len(sessions_df) > 1 else 0)
+            with col1:
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">SESSIONS</div><div style="font-size:3rem;font-weight:900;color:#00FF9C">{len(sessions_df)}</div></div>', unsafe_allow_html=True)
+            with col2:
+                c = get_score_color(sessions_df['avg_score'].mean())
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">AVG SCORE</div><div style="font-size:3rem;font-weight:900;color:{c}">{sessions_df["avg_score"].mean():.1f}</div></div>', unsafe_allow_html=True)
+            with col3:
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">BEST SCORE</div><div style="font-size:3rem;font-weight:900;color:#00FF9C">{sessions_df["avg_score"].max():.1f}</div></div>', unsafe_allow_html=True)
+            with col4:
+                ic = "#00FF9C" if imp >= 0 else "#FF3B3B"
+                st.markdown(f'<div class="metric-card"><div style="color:#8B949E;font-size:0.8rem">IMPROVEMENT</div><div style="font-size:3rem;font-weight:900;color:{ic}">{imp:+.1f}</div></div>', unsafe_allow_html=True)
 
-                with col3:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div style="color:#8B949E; font-size:0.8rem">BEST SCORE</div>
-                        <div style="font-size:3rem; font-weight:900; color:#00FF9C">
-                            {report['best_score']}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            st.markdown("---")
+            from analytics_dashboard import build_dashboard_streamlit
+            fig = build_dashboard_streamlit(sessions_df, frames_df)
+            st.plotly_chart(fig, use_container_width=True)
 
-                with col4:
-                    imp = report['improvement']
-                    color = "#00FF9C" if imp >= 0 else "#FF3B3B"
-                    sign  = "+" if imp >= 0 else ""
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <div style="color:#8B949E; font-size:0.8rem">IMPROVEMENT</div>
-                        <div style="font-size:3rem; font-weight:900; color:{color}">
-                            {sign}{imp}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                # Session history
-                try:
-                    r = requests.get(f"{API_URL}/session-history", timeout=2)
-                    if r.status_code == 200:
-                        history = r.json()
-                        if history['sessions']:
-                            st.markdown("#### 📅 Session History")
-                            for i, session in enumerate(history['sessions']):
-                                color = get_score_color(session['score'] or 0)
-                                st.markdown(f"""
-                                <div style="background:#161B22; border:1px solid #30363D;
-                                            border-radius:8px; padding:0.8rem 1rem;
-                                            margin:0.3rem 0; display:flex;
-                                            justify-content:space-between">
-                                    <span style="color:#8B949E">Session {i+1} — {session['date']}</span>
-                                    <span style="color:{color}; font-weight:700">
-                                        {session['score']}/100
-                                    </span>
-                                </div>
-                                """, unsafe_allow_html=True)
-                except:
-                    pass
-            else:
-                st.info("No sessions yet. Run cv_pipeline.py and complete a session first!")
         else:
-            st.info("Click 'Load My Progress' to see your stats")
+            st.info("Click 'Load My Progress' — needs session JSON files in /data/")
 
 
 # ══════════════════════════════════════════════════════════
@@ -716,6 +724,7 @@ def show_interviewer_mode():
 
         auto = st.toggle("🔄 Auto Refresh", value=False)
         if auto:
+            import time
             time.sleep(2)
             st.rerun()
 
@@ -762,6 +771,16 @@ def show_interviewer_mode():
                             st.metric("Best Score",     f"{report['best_score']}/100")
                         with col3:
                             st.metric("Sessions Done",  report['total_sessions'])
+                            st.markdown("---")
+                        st.markdown("#### 📊 Performance Analytics")
+                        try:
+                            from analytics_dashboard import load_all_sessions, build_dashboard_streamlit
+                            sessions_df, frames_df = load_all_sessions()
+                            if sessions_df is not None:
+                                fig = build_dashboard_streamlit(sessions_df, frames_df)
+                                st.plotly_chart(fig, use_container_width=True)
+                        except Exception as e:
+                            st.warning(f"Analytics not available: {e}")
 
                         score = report['average_score']
                         if score >= 75:
