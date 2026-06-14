@@ -6,7 +6,7 @@
 ![Whisper](https://img.shields.io/badge/Whisper-OpenAI-black)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ---
-🚀 What is PrepSense?
+## 🚀 What is PrepSense?
 Most interview prep tools give you questions. PrepSense gives you a real-time AI coach that watches you, listens to you, and scores you — just like a real interviewer would.
 👁️ Tracks your eye contact using 478 face landmarks
 🧍 Detects your posture via shoulder/ear alignment
@@ -15,7 +15,7 @@ Most interview prep tools give you questions. PrepSense gives you a real-time AI
 📊 Scores your answers using the STAR method
 📈 Shows your progress over multiple sessions
 ---
-🎭 Dual Mode Platform
+## 🎭 Dual Mode Platform
 🎓 Candidate Mode
 Practice mock interviews and get AI feedback on:
 Eye contact and gaze tracking
@@ -30,7 +30,7 @@ Live confidence and stress scoring
 Auto-generated candidate reports with HIRE/PASS recommendation
 Bias-free objective metrics
 ---
-🧠 Tech Stack
+## 🧠 Tech Stack
 Domain	Technologies
 Computer Vision	MediaPipe (478 landmarks), OpenCV
 Machine Learning	TensorFlow, Scikit-learn
@@ -100,7 +100,7 @@ python cv_pipeline.py
 ```
 Open browser at `http://localhost:8501`
 ---
-📊 Features
+## 📊 Features
 ✅ Real-time face landmark detection (478 points)
 ✅ Eye contact scoring using iris position tracking
 ✅ Posture analysis using shoulder/ear alignment
@@ -132,7 +132,7 @@ AI Modules
 SQLite + JSON Storage
 ```
 ---
-👨‍💻 Author
+## 👨‍💻 Author
 Palash Mulchandani
 CS Student who builds production-grade AI products — not tutorial projects.
 PrepSense is a full-stack AI system built entirely from scratch: every module designed, every line written, every bug debugged independently. No templates, no boilerplate, no shortcuts.
