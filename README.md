@@ -141,7 +141,7 @@ CalmCampus — AI student wellness platform
 MoneyOS — AI financial management platform
 Beyond Books — Social learning platform
 > *"I don't just learn technologies — I build with them."*
-🔗 GitHub: @PalashMulchandani
+🔗 GitHub: https://github.com/PalashMulchandani
 💼 LinkedIn: https://www.linkedin.com/in/palash-mulchandani-29a326378/
 📧 Open to internships and collaborations
 ---
